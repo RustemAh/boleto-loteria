@@ -27,8 +27,10 @@
 
         .numero-chip { background: white; color: var(--azul); padding: 8px 18px; border-radius: 6px; font-weight: 800; border: 2px solid var(--azul); display: inline-block; margin: 5px; font-size: 1.1rem; box-shadow: 2px 2px 0px rgba(0,59,142,0.1); }
 
+        /* Banner Publicitario Responsivo */
         .banner-promo { text-align: center; margin: 10px 0 25px 0; }
-        .banner-promo img { width: 100%; max-width: 600px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .banner-promo img { width: 100%; max-width: 600px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.3s; }
+        .banner-promo img:hover { transform: scale(1.01); }
 
         table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; }
         th { background: #f8f9fa; padding: 10px; border-bottom: 2px solid var(--rojo); text-transform: uppercase; color: #555; }
@@ -36,16 +38,17 @@
         
         .search-area { background: #f0f4f8; border: 2px solid var(--azul); border-radius: 10px; padding: 15px; margin-bottom: 20px; }
         .search-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
-        #resBusqueda { display: none; margin-top: 10px; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; }
+        #resBusqueda { display: none; margin-top: 10px; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; animation: popIn 0.5s ease; }
         
-        .celebracion { background: #fff3cd; color: #856404; border: 3px solid var(--dorado); }
+        .celebracion { background: #fff3cd; color: #856404; border: 3px solid var(--dorado); box-shadow: 0 0 15px rgba(255,212,0,0.3); }
         .ganador-simple { background: #d4edda; color: #155724; border: 1px solid var(--verde); }
 
-        /* MODO EMBED: Oculta cabecera y herramientas de administrador */
+        /* MODO EMBED: Oculta cabecera y controles */
         body.is-embed .header-banner, 
         body.is-embed .admin-controls { display: none !important; }
         body.is-embed .container { margin-top: 20px; }
 
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @media (max-width: 500px) { .search-grid { grid-template-columns: 1fr; } .monto-principal { font-size: 1.8rem; } }
     </style>
 </head>
@@ -82,12 +85,9 @@
     let ALL_DATA = [];
     let ACTUAL = null;
 
-    // Obtener parámetros de la URL
     const params = new URLSearchParams(window.location.search);
     const fechaUrl = params.get('fecha');
     const esEmbed = params.get('embed') === '1';
-
-    // Aplicar clase embed si corresponde
     if(esEmbed) document.body.classList.add('is-embed');
 
     function formatMonto(val) {
@@ -120,7 +120,6 @@
         const sel = document.getElementById('selectSorteo');
         sel.innerHTML = ALL_DATA.map(s => `<option value="${s.fecha}">${s.fecha} (Sorteo ${s.n_sorteo})</option>`).join('');
 
-        // Lógica de selección de fecha
         if (fechaUrl) {
             ACTUAL = ALL_DATA.find(s => s.fecha === fechaUrl) || ALL_DATA[0];
             sel.value = ACTUAL.fecha;
@@ -135,12 +134,8 @@
         document.getElementById('subtitulo').innerText = `Sorteo N° ${ACTUAL.n_sorteo} - ${ACTUAL.fecha}`;
         const cont = document.getElementById('contenidoResultados');
 
-        if (!ACTUAL.vigesimos || ACTUAL.vigesimos.trim() === "") {
-            cont.innerHTML = `<div class="card" style="text-align:center; color:#999; padding:40px;"><h3>Resultados no disponibles aún</h3><p>Consulte más tarde.</p></div>`;
-            return;
-        }
-
-        let html = `
+        // Parte común: Premio al Entero y Banner
+        let commonHtml = `
             <div class="card">
                 <div class="ganador-box">
                     <div style="font-weight:bold; color:#555;">Número Premiado</div>
@@ -150,6 +145,19 @@
                 </div>
             </div>
 
+            <div class="banner-promo">
+                <a href="https://www.epicentroradio.com/?utm_source=epicentrochile&utm_medium=banner_robapaginas&utm_campaign=cobertura_nacional" target="_blank">
+                    <img src="https://primerosenlaquinta.cl/wp-content/uploads/2026/03/ChileybotanasconamarilloenfondorojoparaNegociodeSnacksLogo-ezgif.com-optimize.gif" alt="Publicidad Epicentro Radio">
+                </a>
+            </div>
+        `;
+
+        if (!ACTUAL.vigesimos || ACTUAL.vigesimos.trim() === "") {
+            cont.innerHTML = commonHtml + `<div class="card" style="text-align:center; color:#999; padding:40px;"><h3>Resultados detallados no disponibles aún</h3><p>Consulte más tarde.</p></div>`;
+            return;
+        }
+
+        let detalladoHtml = `
             <div class="card">
                 <div class="seccion-titulo">Terminaciones Premiadas</div>
                 <table>
@@ -170,12 +178,6 @@
                 </div>
             </div>
 
-            <div class="banner-promo">
-                <a href="https://www.epicentroradio.com/?utm_source=epicentrochile&utm_medium=banner_robapaginas&utm_campaign=cobertura_nacional" target="_blank">
-                    <img src="https://primerosenlaquinta.cl/wp-content/uploads/2026/03/ChileybotanasconamarilloenfondorojoparaNegociodeSnacksLogo-ezgif.com-optimize.gif" alt="Publicidad Epicentro Radio">
-                </a>
-            </div>
-
             <div class="card">
                 <div class="seccion-titulo">Premios al Vigésimo</div>
                 <table>
@@ -191,7 +193,7 @@
                 </table>
             </div>
         `;
-        cont.innerHTML = html;
+        cont.innerHTML = commonHtml + detalladoHtml;
     }
 
     document.getElementById('selectSorteo').onchange = (e) => {
@@ -229,7 +231,7 @@
     function copiarEmbed() {
         const base = window.location.href.split('?')[0];
         const f = document.getElementById('selectSorteo').value;
-        const code = `<iframe src="${base}?fecha=${f}&embed=1" width="100%" height="1050" style="border:0; border-radius:12px; overflow:hidden;" loading="lazy"></iframe>`;
+        const code = `<iframe src="${base}?fecha=${f}&embed=1" width="100%" height="1100" style="border:0; border-radius:12px; overflow:hidden;" loading="lazy"></iframe>`;
         navigator.clipboard.writeText(code).then(() => alert("Embed copiado para el sorteo: " + f));
     }
 </script>
