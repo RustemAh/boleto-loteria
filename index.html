@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta Boleto Lotería - Epicentro Chile</title>
+    <style>
+        :root { --azul: #003b8e; --rojo: #e74c3c; --dorado: #ffd400; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 0; color: #333; }
+        
+        /* Header Estilo Epicentro */
+        .header { background: linear-gradient(135deg, var(--azul) 0%, #0056b3 100%); color: white; text-align: center; padding: 30px 20px; border-bottom: 6px solid #00265d; }
+        .badge { background: var(--dorado); color: var(--azul); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+        
+        /* Contenedor Principal */
+        .container { max-width: 600px; margin: -30px auto 40px; padding: 20px; }
+        .card { background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; margin-bottom: 20px; }
+
+        /* Buscador */
+        .search-title { text-align: center; margin-bottom: 15px; font-weight: bold; color: var(--azul); }
+        .search-group { display: flex; gap: 10px; }
+        input[type="number"] { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 20px; text-align: center; outline: none; transition: border 0.3s; }
+        input[type="number"]:focus { border-color: var(--azul); }
+        button#btnBuscar { background: var(--azul); color: white; border: none; padding: 0 25px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+
+        /* Resultados de búsqueda */
+        #resultadoBusqueda { margin-top: 20px; padding: 15px; border-radius: 10px; display: none; text-align: center; animation: fadeIn 0.5s; }
+        .ganador { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .no-ganador { background: #f8d7da; color: #721c24; }
+
+        /* Resumen del Sorteo */
+        .resumen-sorteo { text-align: center; }
+        .monto-mayor { font-size: 2.5rem; font-weight: 900; color: var(--rojo); margin: 10px 0; }
+        .numero-destacado { background: var(--azul); color: white; padding: 10px 25px; border-radius: 50px; font-size: 1.8rem; display: inline-block; }
+        
+        .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .info-box { background: #f8f9fa; padding: 10px; border-radius: 8px; border-left: 4px solid var(--azul); text-align: left; }
+        .info-box span { display: block; font-size: 11px; text-transform: uppercase; color: #777; }
+        .info-box strong { font-size: 14px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 480px) { .banner-titular { font-size: 1.8rem; } .monto-mayor { font-size: 1.8rem; } }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <span class="badge">Lotería de Concepción</span>
+    <h1 id="tituloSorteo">Cargando Sorteo...</h1>
+    <p id="fechaSorteo">-- / -- / ----</p>
+</header>
+
+<div class="container">
+    <div class="card">
+        <div class="search-title">¿TU NÚMERO TIENE PREMIO?</div>
+        <div class="search-group">
+            <input type="number" id="inputBoleto" placeholder="Ej: 36445">
+            <button id="btnBuscar">VERIFICAR</button>
+        </div>
+        <div id="resultadoBusqueda"></div>
+    </div>
+
+    <div class="card resumen-sorteo">
+        <div class="info-box" style="display:inline-block; border:none; margin-bottom:10px;">
+            <span>Premio Mayor al Entero</span>
+        </div>
+        <div class="monto-mayor" id="montoMayor">$0</div>
+        <div class="numero-destacado" id="numMayor">00000</div>
+
+        <div class="grid-info">
+            <div class="info-box">
+                <span>Terminaciones</span>
+                <strong id="txtTerminaciones">---</strong>
+            </div>
+            <div class="info-box">
+                <span>Aproximaciones</span>
+                <strong id="txtAproximaciones">---</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SHEET_ID = "TU_ID_DE_GOOGLE_SHEETS_AQUI"; // REEMPLAZA ESTO
+    const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+    let DATA_ACTUAL = null;
+
+    // Cargar datos
+    fetch(URL).then(r => r.text()).then(text => {
+        const json = JSON.parse(text.match(/setResponse\(([\s\S]*?)\);?\s*$/)[1]);
+        const row = json.table.rows[json.table.rows.length - 1].c; // Tomar el último sorteo
+
+        DATA_ACTUAL = {
+            fecha: row[0].f || row[0].v,
+            sorteo: row[1].v,
+            numMayor: row[2].v.toString(),
+            montoMayor: row[3].v,
+            aproximaciones: row[4].v.toString().split(',').map(n => n.trim()),
+            terminaciones: row[5].v.toString().split(',').map(n => n.trim()),
+            vigesimos: row[6].v.toString().split(',').map(n => n.trim())
+        };
+
+        renderUI();
+    });
+
+    function renderUI() {
+        document.getElementById('tituloSorteo').innerText = "Sorteo N° " + DATA_ACTUAL.sorteo;
+        document.getElementById('fechaSorteo').innerText = DATA_ACTUAL.fecha;
+        document.getElementById('montoMayor').innerText = DATA_ACTUAL.montoMayor;
+        document.getElementById('numMayor').innerText = DATA_ACTUAL.numMayor;
+        document.getElementById('txtTerminaciones').innerText = DATA_ACTUAL.terminaciones.join(" - ");
+        document.getElementById('txtAproximaciones').innerText = DATA_ACTUAL.aproximaciones.slice(0,2).join(" y ");
+    }
+
+    document.getElementById('btnBuscar').addEventListener('click', () => {
+        const num = document.getElementById('inputBoleto').value.trim();
+        const resDiv = document.getElementById('resultadoBusqueda');
+        
+        if(!num) return;
+
+        resDiv.style.display = "block";
+        
+        // Lógica de validación
+        if (num === DATA_ACTUAL.numMayor) {
+            resDiv.className = "ganador";
+            resDiv.innerHTML = "<strong>¡INCREÍBLE!</strong><br>Eres el ganador del PREMIO MAYOR.";
+        } else if (DATA_ACTUAL.vigesimos.includes(num)) {
+            resDiv.className = "ganador";
+            resDiv.innerHTML = "<strong>¡FELICIDADES!</strong><br>Tu número tiene premio al Vigésimo.";
+        } else if (DATA_ACTUAL.aproximaciones.includes(num)) {
+            resDiv.className = "ganador";
+            resDiv.innerHTML = "<strong>¡CASI!</strong><br>Ganaste premio por Aproximación.";
+        } else if (DATA_ACTUAL.terminaciones.includes(num.slice(-1))) {
+            resDiv.className = "ganador";
+            resDiv.innerHTML = "<strong>¡GANASTE!</strong><br>Premio por terminación " + num.slice(-1);
+        } else {
+            resDiv.className = "no-ganador";
+            resDiv.innerHTML = "Lo sentimos, el número " + num + " no registra premios en este sorteo.";
+        }
+    });
+</script>
+
+</body>
+</html>
