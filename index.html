@@ -14,23 +14,18 @@
 
         .seccion-titulo { background: var(--rojo); color: white; padding: 10px; font-weight: bold; text-transform: uppercase; font-size: 14px; margin: -20px -20px 15px -20px; text-align: center; }
         
-        /* Controles de Administración */
         .admin-controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; }
         select { padding: 8px; border-radius: 6px; border: 1px solid #ddd; font-weight: bold; color: var(--azul); cursor: pointer; }
         .btn-copy { padding: 8px 15px; border-radius: 6px; cursor: pointer; background: white; border: 1px solid var(--azul); color: var(--azul); font-weight: bold; transition: 0.3s; }
-        .btn-copy:hover { background: var(--azul); color: white; }
 
-        /* Ganador Principal */
         .ganador-box { text-align: center; padding: 20px; border: 2px solid var(--dorado); border-radius: 10px; background: #fffdf2; }
         .monto-principal { font-size: 2.5rem; font-weight: 900; color: var(--rojo); margin: 5px 0; }
         .num-principal { font-size: 2rem; color: var(--rojo); border: 2px solid var(--dorado); padding: 5px 30px; display: inline-block; border-radius: 5px; background: white; font-weight: bold; }
 
         .numero-chip { background: white; color: var(--azul); padding: 8px 18px; border-radius: 6px; font-weight: 800; border: 2px solid var(--azul); display: inline-block; margin: 5px; font-size: 1.1rem; box-shadow: 2px 2px 0px rgba(0,59,142,0.1); }
 
-        /* Banner Publicitario Responsivo */
         .banner-promo { text-align: center; margin: 10px 0 25px 0; }
-        .banner-promo img { width: 100%; max-width: 600px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.3s; }
-        .banner-promo img:hover { transform: scale(1.01); }
+        .banner-promo img { width: 100%; max-width: 600px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 
         table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; }
         th { background: #f8f9fa; padding: 10px; border-bottom: 2px solid var(--rojo); text-transform: uppercase; color: #555; }
@@ -38,17 +33,11 @@
         
         .search-area { background: #f0f4f8; border: 2px solid var(--azul); border-radius: 10px; padding: 15px; margin-bottom: 20px; }
         .search-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
-        #resBusqueda { display: none; margin-top: 10px; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; animation: popIn 0.5s ease; }
+        #resBusqueda { display: none; margin-top: 10px; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; }
         
-        .celebracion { background: #fff3cd; color: #856404; border: 3px solid var(--dorado); box-shadow: 0 0 15px rgba(255,212,0,0.3); }
-        .ganador-simple { background: #d4edda; color: #155724; border: 1px solid var(--verde); }
-
-        /* MODO EMBED: Oculta cabecera y controles */
-        body.is-embed .header-banner, 
-        body.is-embed .admin-controls { display: none !important; }
+        body.is-embed .header-banner, body.is-embed .admin-controls { display: none !important; }
         body.is-embed .container { margin-top: 20px; }
 
-        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @media (max-width: 500px) { .search-grid { grid-template-columns: 1fr; } .monto-principal { font-size: 1.8rem; } }
     </style>
 </head>
@@ -87,17 +76,17 @@
 
     const params = new URLSearchParams(window.location.search);
     const fechaUrl = params.get('fecha');
-    const esEmbed = params.get('embed') === '1';
-    if(esEmbed) document.body.classList.add('is-embed');
+    if(params.get('embed') === '1') document.body.classList.add('is-embed');
 
     function formatMonto(val) {
-        if (!val) return "$0";
+        if (!val || val === "undefined") return "Sin resultados";
         let n = val.toString().replace(/[$.]/g, "");
+        if (isNaN(n)) return val; 
         return "$" + Number(n).toLocaleString('es-CL');
     }
 
     function limpiarListaNumeros(str) {
-        if (!str) return [];
+        if (!str || str === "undefined") return [];
         return str.toString().replace(/[.,]/g, " ").split(/\s+/).filter(n => n.length > 0);
     }
 
@@ -107,9 +96,9 @@
             const c = r.c;
             return {
                 fecha: c[0] ? (c[0].f || c[0].v).trim() : "",
-                n_sorteo: c[1]?.v.toString(),
-                numM: c[2]?.v.toString(),
-                montoM: c[3]?.v.toString(),
+                n_sorteo: c[1] ? c[1].v.toString() : "0000",
+                numM: c[2] ? c[2].v.toString() : "Sin resultados",
+                montoM: c[3] ? c[3].v.toString() : "Sin resultados",
                 aprox1: limpiarListaNumeros(c[4]?.v),
                 aprox2: limpiarListaNumeros(c[5]?.v),
                 termina: c[6]?.v ? c[6].v.toString().split(',').map(s=>s.trim()) : [],
@@ -134,7 +123,6 @@
         document.getElementById('subtitulo').innerText = `Sorteo N° ${ACTUAL.n_sorteo} - ${ACTUAL.fecha}`;
         const cont = document.getElementById('contenidoResultados');
 
-        // Parte común: Premio al Entero y Banner
         let commonHtml = `
             <div class="card">
                 <div class="ganador-box">
@@ -152,7 +140,7 @@
             </div>
         `;
 
-        if (!ACTUAL.vigesimos || ACTUAL.vigesimos.trim() === "") {
+        if (!ACTUAL.vigesimos || ACTUAL.vigesimos.trim() === "" || ACTUAL.vigesimos === "undefined") {
             cont.innerHTML = commonHtml + `<div class="card" style="text-align:center; color:#999; padding:40px;"><h3>Resultados detallados no disponibles aún</h3><p>Consulte más tarde.</p></div>`;
             return;
         }
@@ -213,17 +201,14 @@
         let p = null;
         for(let x of lista) { const [c, m] = x.split(':'); if(c.trim() === comb) { p = m; break; } }
 
-        if (n === ACTUAL.numM) {
-            res.className = "celebracion";
-            res.innerHTML = `⭐ ¡ES EL PREMIO MAYOR! ⭐<br>Vigésimo ${v} premiado con parte de los ${formatMonto(ACTUAL.montoM)}`;
+        if (n === ACTUAL.numM && ACTUAL.numM !== "Sin resultados") {
+            res.style.background = "#fff3cd"; res.style.color="#856404";
+            res.innerHTML = `⭐ ¡ES EL PREMIO MAYOR! ⭐<br>Vigésimo ${v} del ${n} premiado.`;
         } else if(p) {
-            res.className = "ganador-simple";
+            res.style.background = "#d4edda"; res.style.color="#155724";
             res.innerHTML = `¡GANASTE! 🎉<br>Vigésimo ${v} del ${n} premiado con ${formatMonto(p)}`;
-        } else if (ACTUAL.aprox1.includes(n)) {
-            res.className = "celebracion";
-            res.innerHTML = "¡1ª APROXIMACIÓN GANADA! 💰<br>Premio de $5.000.000 al entero.";
         } else {
-            res.className = ""; res.style.background = "#f8d7da"; res.style.color="#721c24";
+            res.style.background = "#f8d7da"; res.style.color="#721c24";
             res.innerHTML = "Sin premios para esta combinación.";
         }
     }
@@ -232,7 +217,7 @@
         const base = window.location.href.split('?')[0];
         const f = document.getElementById('selectSorteo').value;
         const code = `<iframe src="${base}?fecha=${f}&embed=1" width="100%" height="1100" style="border:0; border-radius:12px; overflow:hidden;" loading="lazy"></iframe>`;
-        navigator.clipboard.writeText(code).then(() => alert("Embed copiado para el sorteo: " + f));
+        navigator.clipboard.writeText(code).then(() => alert("Embed copiado"));
     }
 </script>
 </body>
