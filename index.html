@@ -1,158 +1,31 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resultados Lotería - Epicentro Labs</title>
-    <style>
-        :root { --azul: #003b8e; --rojo: #e74c3c; --dorado: #ffd400; --fondo: #f4f7f6; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--fondo); margin: 0; padding: 0; }
-        
-        /* Banner Principal */
-        .header-banner { background: linear-gradient(135deg, var(--azul) 0%, #0056b3 100%); color: white; text-align: center; padding: 30px 15px; border-bottom: 5px solid #00265d; }
-        .badge { background: var(--dorado); color: var(--azul); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: inline-block; }
-        
-        .container { max-width: 700px; margin: -30px auto 40px; padding: 0 15px; }
-        .card { background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; margin-bottom: 20px; }
-
-        /* Controles y Selector */
-        .controles { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
-        select { padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; color: var(--azul); }
-        .btn-embed { background: var(--azul); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 13px; }
-
-        /* Buscador */
-        .search-box { background: #f8f9fa; border: 2px solid var(--azul); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-        .search-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
-        input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; text-align: center; }
-        .btn-check { background: var(--azul); color: white; border: none; border-radius: 6px; padding: 0 15px; cursor: pointer; font-weight: bold; }
-        #resBusqueda { display: none; margin-top: 10px; padding: 10px; border-radius: 6px; text-align: center; font-weight: bold; font-size: 14px; }
-
-        /* Ganador Destacado */
-        .ganador-destacado { text-align: center; margin-bottom: 25px; }
-        .monto-xxl { font-size: 2.4rem; font-weight: 900; color: var(--rojo); margin: 5px 0; }
-        .num-xxl { background: var(--azul); color: white; padding: 6px 25px; border-radius: 50px; font-size: 1.8rem; display: inline-block; }
-
-        /* Tabla de Resultados */
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { background: #f0f0f0; padding: 10px; text-align: left; color: #555; }
-        td { padding: 10px; border-bottom: 1px solid #eee; }
-        .txt-premio { font-weight: bold; color: var(--azul); text-align: right; }
-
-        /* Estilo para Embed */
-        body.is-embed .header-banner, body.is-embed .controles { display: none; }
-        body.is-embed .container { margin-top: 20px; }
-        body.is-embed .card { box-shadow: none; border: 1px solid #eee; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    </style>
-</head>
-<body>
-
-<section class="header-banner">
-    <span class="badge">Lotería de Concepción</span>
-    <h1 style="margin:0; font-size: 1.8rem;">Resultados Oficiales</h1>
-    <p id="subtitulo">Cargando sorteos...</p>
-</section>
-
-<div class="container">
-    <div class="controles">
-        <select id="selectSorteo"><option>Cargando fechas...</option></select>
-        <button class="btn-embed" onclick="copiarEmbed()">Copiar Embed</button>
-    </div>
-
-    <div class="card search-box">
-        <div style="text-align: center; font-size: 13px; font-weight: bold; color: var(--azul); margin-bottom: 10px;">CONSULTAR MI BOLETO</div>
-        <div class="search-grid">
-            <input type="number" id="inNum" placeholder="Número">
-            <input type="number" id="inVig" placeholder="Vig.">
-            <button class="btn-check" onclick="verificar()">BUSCAR</button>
-        </div>
-        <div id="resBusqueda"></div>
-    </div>
-
-    <div class="card">
-        <div class="ganador-destacado">
-            <span style="font-size: 12px; font-weight: bold; color: #888;">PREMIO MAYOR AL ENTERO</span>
-            <div class="monto-xxl" id="montoM">$0</div>
-            <div class="num-xxl" id="numM">00000</div>
-        </div>
-
-        <h3 style="color: var(--azul); border-left: 4px solid var(--dorado); padding-left: 10px; font-size: 16px;">Lista de Premios al Vigésimo</h3>
-        <table>
-            <thead><tr><th>Número</th><th>Vig.</th><th style="text-align:right;">Premio</th></tr></thead>
-            <tbody id="tablaBody"></tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-    const SHEET_ID = "1jmqgDAU1HcTyT8zGqHacljhfn_WlN_pVjgyyonPEsXk";
-    const URL_JSON = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
-    
-    let ALL_SORTEOS = [];
-    let SORTEO_ACTIVO = null;
-
-    // Detectar Modo Embed y Fecha por URL
-    const params = new URLSearchParams(window.location.search);
-    if(params.get('embed') === '1') document.body.classList.add('is-embed');
-    const fechaUrl = params.get('fecha');
-
-    fetch(URL_JSON).then(r => r.text()).then(text => {
-        const json = JSON.parse(text.match(/setResponse\(([\s\S]*?)\);?\s*$/)[1]);
-        const rows = json.table.rows;
-
-        // Procesar todos los sorteos de la hoja
-        ALL_SORTEOS = rows.map(r => {
-            const c = r.c;
-            return {
-                fecha: c[0].f || c[0].v,
-                n_sorteo: c[1].v.toString(),
-                numMayor: c[2].v.toString(),
-                montoMayor: c[3].v,
-                aprox1: c[4] ? c[4].v.toString().split(',').map(s => s.trim()) : [],
-                aprox2: c[5] ? c[5].v.toString().split(',').map(s => s.trim()) : [],
-                vigesimos: c[7] ? c[7].v.toString() : ""
-            };
-        }).reverse(); // El más reciente primero
-
-        // Llenar selector
-        const select = document.getElementById('selectSorteo');
-        select.innerHTML = ALL_SORTEOS.map(s => `<option value="${s.fecha}">${s.fecha} (Sorteo ${s.n_sorteo})</option>`).join('');
-
-        // Cargar sorteo inicial (por URL o el último)
-        if(fechaUrl) {
-            SORTEO_ACTIVO = ALL_SORTEOS.find(s => s.fecha === fechaUrl) || ALL_SORTEOS[0];
-            select.value = SORTEO_ACTIVO.fecha;
-        } else {
-            SORTEO_ACTIVO = ALL_SORTEOS[0];
-        }
-
-        render();
-    });
-
-    function render() {
+function render() {
+        // Actualizar textos de cabecera
         document.getElementById('subtitulo').innerText = `Sorteo N° ${SORTEO_ACTIVO.n_sorteo} - ${SORTEO_ACTIVO.fecha}`;
-        document.getElementById('montoM').innerText = SORTEO_ACTIVO.montoMayor;
+        
+        // Limpiar el monto para evitar doble $$ (Elimina el $ si ya existe en el dato)
+        const montoLimpio = SORTEO_ACTIVO.montoMayor.toString().replace('$', '');
+        document.getElementById('montoM').innerText = `$${montoLimpio}`;
         document.getElementById('numM').innerText = SORTEO_ACTIVO.numMayor;
+
+        // Mostrar aproximaciones y terminaciones en la interfaz (Opcional, para que sean visibles)
+        console.log("Aproximaciones cargadas:", SORTEO_ACTIVO.aprox1, SORTEO_ACTIVO.aprox2);
 
         const tbody = document.getElementById('tablaBody');
         const filas = SORTEO_ACTIVO.vigesimos.split(';');
         let html = "";
+        
         filas.forEach(f => {
             if(f.includes(':')) {
                 const [comb, monto] = f.split(':');
                 const [n, v] = comb.split('-');
-                html += `<tr><td><strong>${n}</strong></td><td>${v}</td><td class="txt-premio">$${monto}</td></tr>`;
+                // Limpiamos el monto de la tabla también
+                const montoTabla = monto.toString().replace('$', '');
+                html += `<tr><td><strong>${n}</strong></td><td>${v}</td><td class="txt-premio">$${montoTabla}</td></tr>`;
             }
         });
         tbody.innerHTML = html;
         document.getElementById('resBusqueda').style.display = "none";
     }
-
-    document.getElementById('selectSorteo').addEventListener('change', (e) => {
-        SORTEO_ACTIVO = ALL_SORTEOS.find(s => s.fecha === e.target.value);
-        render();
-    });
 
     function verificar() {
         const n = document.getElementById('inNum').value.trim();
@@ -165,29 +38,36 @@
         const lista = SORTEO_ACTIVO.vigesimos.split(';');
         let premio = null;
 
+        // 1. Buscar en lista de vigésimos
         for(let f of lista) {
             const [c, m] = f.split(':');
             if(c.trim() === llave) { premio = m; break; }
         }
 
         if(premio) {
+            const pLimpio = premio.toString().replace('$', '');
             res.style.background = "#d4edda"; res.style.color = "#155724";
-            res.innerHTML = `¡GANASTE! Vigésimo ${v} del ${n}: $${premio}`;
-        } else if(n === SORTEO_ACTIVO.numMayor) {
+            res.innerHTML = `¡GANASTE! Vigésimo ${v} del ${n}: $${pLimpio}`;
+        } 
+        // 2. Lógica de Aproximaciones y Terminaciones
+        else if(n === SORTEO_ACTIVO.numMayor) {
             res.style.background = "#fff3cd"; res.style.color = "#856404";
             res.innerHTML = "¡NUMERO GANADOR DEL PREMIO MAYOR!";
-        } else {
+        } 
+        else if (SORTEO_ACTIVO.aprox1.includes(n)) {
+            res.style.background = "#d1ecf1"; res.style.color = "#0c5460";
+            res.innerHTML = "¡GANASTE 1ª APROXIMACIÓN! ($5.000.000)";
+        }
+        else if (SORTEO_ACTIVO.aprox2.includes(n)) {
+            res.style.background = "#d1ecf1"; res.style.color = "#0c5460";
+            res.innerHTML = "¡GANASTE 2ª APROXIMACIÓN! ($500.000)";
+        }
+        else if (SORTEO_ACTIVO.terminaciones && SORTEO_ACTIVO.terminaciones.includes(n.slice(-1))) {
+            res.style.background = "#e2e3e5"; res.style.color = "#383d41";
+            res.innerHTML = `PREMIO POR TERMINACIÓN "${n.slice(-1)}"`;
+        }
+        else {
             res.style.background = "#f8d7da"; res.style.color = "#721c24";
             res.innerHTML = "Sin premios registrados.";
         }
     }
-
-    function copiarEmbed() {
-        const base = window.location.href.split('?')[0];
-        const fecha = document.getElementById('selectSorteo').value;
-        const code = `<iframe src="${base}?fecha=${fecha}&embed=1" width="100%" height="800" style="border:0; border-radius:12px; overflow:hidden;" loading="lazy"></iframe>`;
-        navigator.clipboard.writeText(code).then(() => alert("Código Embed copiado para el sorteo del " + fecha));
-    }
-</script>
-</body>
-</html>
