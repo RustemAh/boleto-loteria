@@ -3,117 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta Boleto Lotería - Epicentro Chile</title>
+    <title>Buscador de Premios Lotería - Epicentro Chile</title>
     <style>
-        :root { --azul: #003b8e; --rojo: #e74c3c; --dorado: #ffd400; --verde: #27ae60; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f7f6; margin: 0; padding: 0; }
-        .header { background: linear-gradient(135deg, var(--azul) 0%, #0056b3 100%); color: white; text-align: center; padding: 35px 20px; border-bottom: 5px solid #00265d; }
-        .container { max-width: 600px; margin: -30px auto 40px; padding: 0 15px; }
+        :root { --azul: #003b8e; --rojo: #e74c3c; --dorado: #ffd400; --gris: #f4f7f6; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--gris); margin: 0; padding: 0; }
+        
+        .header { background: linear-gradient(135deg, var(--azul) 0%, #0056b3 100%); color: white; text-align: center; padding: 40px 20px; border-bottom: 5px solid #00265d; }
+        .container { max-width: 550px; margin: -40px auto 40px; padding: 0 15px; }
+        
         .card { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 25px; margin-bottom: 20px; }
         
-        /* Buscador */
-        .search-group { display: flex; gap: 10px; margin: 15px 0; }
-        input { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 20px; text-align: center; }
-        button { background: var(--azul); color: white; border: none; padding: 0 20px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .search-box { display: flex; flex-direction: column; gap: 12px; }
+        input { padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 18px; text-align: center; outline: none; }
+        input:focus { border-color: var(--azul); }
         
-        /* Alertas de Premio */
-        #resultadoBusqueda { display: none; padding: 20px; border-radius: 10px; text-align: center; margin-top: 15px; font-weight: bold; animation: slideDown 0.4s ease; }
+        button { background: var(--azul); color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        button:hover { background: #00265d; }
+
+        #resultado { display: none; margin-top: 20px; padding: 20px; border-radius: 10px; text-align: center; font-weight: bold; animation: fadeIn 0.4s ease; }
         .ganador-top { background: #fff3cd; color: #856404; border: 2px solid var(--dorado); }
         .ganador-normal { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .no-ganador { background: #f8d7da; color: #721c24; }
 
-        /* Info Sorteo */
-        .monto-mayor { font-size: 2.5rem; font-weight: 900; color: var(--rojo); margin: 10px 0; text-align: center; }
-        .num-destacado { background: var(--azul); color: white; padding: 8px 25px; border-radius: 50px; font-size: 1.8rem; display: block; width: fit-content; margin: 0 auto 20px; }
-        
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .mayor-display { text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+        .monto { font-size: 2.2rem; font-weight: 900; color: var(--rojo); margin: 5px 0; }
+        .numero { background: var(--azul); color: white; padding: 5px 20px; border-radius: 50px; font-size: 1.6rem; display: inline-block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <header class="header">
-    <div style="font-size: 12px; font-weight: bold; background: var(--dorado); color: var(--azul); display: inline-block; padding: 3px 10px; border-radius: 10px; margin-bottom: 10px;">LOTERÍA DE CONCEPCIÓN</div>
-    <h1 id="tituloSorteo" style="margin:0;">Cargando...</h1>
-    <p id="fechaSorteo" style="opacity: 0.9;">--/--/--</p>
+    <div style="background: var(--dorado); color: var(--azul); display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; margin-bottom: 10px;">EPICENTRO LABS</div>
+    <h1 id="sorteo-info" style="margin:0; font-size: 1.8rem;">Cargando Sorteo...</h1>
+    <p id="fecha-info" style="opacity: 0.9; margin-top: 5px;">-- / -- / ----</p>
 </header>
 
 <div class="container">
     <div class="card">
-        <div style="text-align: center; color: var(--azul); font-weight: bold;">CONSULTA TU NÚMERO</div>
-        <div class="search-group">
-            <input type="number" id="inputBoleto" placeholder="Ej: 36445">
-            <button id="btnBuscar">BUSCAR</button>
+        <div style="color: var(--azul); font-weight: bold; text-align: center; margin-bottom: 15px;">CONSULTA TU BOLETO</div>
+        <div class="search-box">
+            <input type="number" id="inputNumero" placeholder="Número de Boleto">
+            <input type="number" id="inputVigesimo" placeholder="Vigésimo (1 al 20)">
+            <button onclick="verificarPremio()">VERIFICAR RESULTADO</button>
         </div>
-        <div id="resultadoBusqueda"></div>
+        <div id="resultado"></div>
     </div>
 
-    <div class="card" style="text-align: center;">
-        <span style="font-size: 12px; color: #777;">PREMIO MAYOR AL ENTERO</span>
-        <div class="monto-mayor" id="montoMayor">$0</div>
-        <div class="num-destacado" id="numMayor">00000</div>
-        <p style="font-size: 13px; color: #666;">Verifique sus aproximaciones y vigésimos en el buscador superior.</p>
+    <div class="card mayor-display">
+        <span style="font-size: 12px; color: #777; font-weight: bold;">PREMIO MAYOR AL ENTERO</span>
+        <div class="monto" id="montoMayor">$0</div>
+        <div class="numero" id="numeroMayor">00000</div>
     </div>
 </div>
 
 <script>
-    const SHEET_ID = "TU_ID_DE_GOOGLE_SHEETS"; // REEMPLAZA CON TU ID
-    const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+    const SHEET_ID = "1jmqgDAU1HcTyT8zGqHacljhfn_WlN_pVjgyyonPEsXk";
+    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
-    let DATA = null;
+    let DATA_SORTEO = null;
 
-    fetch(URL).then(r => r.text()).then(text => {
-        const json = JSON.parse(text.match(/setResponse\(([\s\S]*?)\);?\s*$/)[1]);
-        const row = json.table.rows[json.table.rows.length - 1].c;
+    // Cargar datos desde Google Sheets
+    fetch(SHEET_URL)
+        .then(res => res.text())
+        .then(text => {
+            const json = JSON.parse(text.match(/setResponse\(([\s\S]*?)\);?\s*$/)[1]);
+            const row = json.table.rows[json.table.rows.length - 1].c; // Última fila
 
-        DATA = {
-            sorteo: row[1].v,
-            fecha: row[0].f || row[0].v,
-            numMayor: row[2].v.toString(),
-            montoMayor: row[3].v,
-            aprox1: row[4].v.toString().split(',').map(n => n.trim()),
-            aprox2: row[5].v.toString().split(',').map(n => n.trim()),
-            terminaciones: row[6].v.toString().split(',').map(n => n.trim()),
-            vigesimos: row[7].v.toString().split(',').map(n => n.trim())
-        };
+            DATA_SORTEO = {
+                fecha: row[0].f || row[0].v,
+                n_sorteo: row[1].v,
+                numero_mayor: row[2].v.toString(),
+                monto_mayor: row[3].v,
+                aprox_1: row[4] ? row[4].v.toString().split(',').map(s => s.trim()) : [],
+                aprox_2: row[5] ? row[5].v.toString().split(',').map(s => s.trim()) : [],
+                terminaciones: row[6] ? row[6].v.toString().split(',').map(s => s.trim()) : [],
+                vigesimos_raw: row[7] ? row[7].v.toString() : ""
+            };
+
+            actualizarUI();
+        });
+
+    function actualizarUI() {
+        document.getElementById('sorteo-info').innerText = "Sorteo N° " + DATA_SORTEO.n_sorteo;
+        document.getElementById('fecha-info').innerText = DATA_SORTEO.fecha;
+        document.getElementById('montoMayor').innerText = DATA_SORTEO.monto_mayor;
+        document.getElementById('numeroMayor').innerText = DATA_SORTEO.numero_mayor;
+    }
+
+    function verificarPremio() {
+        const num = document.getElementById('inputNumero').value.trim();
+        const vig = document.getElementById('inputVigesimo').value.trim();
+        const resDiv = document.getElementById('resultado');
+
+        if (!num || !vig || !DATA_SORTEO) {
+            alert("Por favor, ingresa el número y el vigésimo.");
+            return;
+        }
+
+        resDiv.style.display = "block";
+        const combinacionBusqueda = `${num}-${vig}`;
         
-        document.getElementById('tituloSorteo').innerText = "Sorteo N° " + DATA.sorteo;
-        document.getElementById('fechaSorteo').innerText = DATA.fecha;
-        document.getElementById('montoMayor').innerText = DATA.montoMayor;
-        document.getElementById('numMayor').innerText = DATA.numMayor;
-    });
+        // 1. Verificar en Lista de Vigésimos/Especiales (Columna H)
+        const listaVigesimos = DATA_SORTEO.vigesimos_raw.split(';');
+        let premioEspecial = null;
 
-    document.getElementById('btnBuscar').addEventListener('click', () => {
-        const n = document.getElementById('inputBoleto').value.trim();
-        const res = document.getElementById('resultadoBusqueda');
-        if(!n || !DATA) return;
-
-        res.style.display = "block";
-
-        if (n === DATA.numMayor) {
-            res.className = "ganador-top";
-            res.innerHTML = "¡FELICITACIONES!<br>PREMIO MAYOR: " + DATA.montoMayor;
-        } 
-        else if (DATA.aprox1.includes(n)) {
-            res.className = "ganador-top";
-            res.innerHTML = "¡EXCELENTE!<br>1ª APROXIMACIÓN: Ganaste $5.000.000 al entero.";
-        } 
-        else if (DATA.aprox2.includes(n)) {
-            res.className = "ganador-normal";
-            res.innerHTML = "¡GANASTE!<br>2ª APROXIMACIÓN: Ganaste $500.000 al entero.";
+        for (let item of listaVigesimos) {
+            const [llave, monto] = item.split(':');
+            if (llave.trim() === combinacionBusqueda) {
+                premioEspecial = monto;
+                break;
+            }
         }
-        else if (DATA.vigesimos.includes(n)) {
-            res.className = "ganador-normal";
-            res.innerHTML = "¡GANASTE!<br>Tienes premio al Vigésimo.";
+
+        if (premioEspecial) {
+            resDiv.className = "ganador-normal";
+            resDiv.innerHTML = `¡BOLETO PREMIADO!<br>El vigésimo ${vig} del número ${num} ganó: <strong>$${premioEspecial}</strong>`;
+        } 
+        // 2. Verificar Premio Mayor
+        else if (num === DATA_SORTEO.numero_mayor) {
+            resDiv.className = "ganador-top";
+            resDiv.innerHTML = `¡GANASTE EL PREMIO MAYOR!<br>Vigésimo ${vig} premiado con parte de los ${DATA_SORTEO.monto_mayor}`;
         }
-        else if (DATA.terminaciones.includes(n.slice(-1))) {
-            res.className = "ganador-normal";
-            res.innerHTML = "¡TIENES PREMIO!<br>Ganaste por terminación " + n.slice(-1);
+        // 3. Verificar 1ª Aproximación ($5M)
+        else if (DATA_SORTEO.aprox_1.includes(num)) {
+            resDiv.className = "ganador-top";
+            resDiv.innerHTML = `¡GANASTE 1ª APROXIMACIÓN!<br>Premio de $5.000.000 al entero.`;
+        }
+        // 4. Verificar 2ª Aproximación ($500k)
+        else if (DATA_SORTEO.aprox_2.includes(num)) {
+            resDiv.className = "ganador-normal";
+            resDiv.innerHTML = `¡GANASTE 2ª APROXIMACIÓN!<br>Premio de $500.000 al entero.`;
+        }
+        // 5. Verificar Terminación
+        else if (DATA_SORTEO.terminaciones.includes(num.slice(-1))) {
+            resDiv.className = "ganador-normal";
+            resDiv.innerHTML = `¡TIENE PREMIO!<br>Ganaste por terminación ${num.slice(-1)}`;
         }
         else {
-            res.className = "no-ganador";
-            res.innerHTML = "Número sin premios en este sorteo.";
+            resDiv.className = "no-ganador";
+            resDiv.innerHTML = `El número ${num} vigésimo ${vig} no registra premios.`;
         }
-    });
+    }
 </script>
+
 </body>
 </html>
