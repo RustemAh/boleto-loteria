@@ -3,154 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resultados Lotería - Epicentro Labs</title>
+    <title>Resultados Boleto Lotería - Epicentro Labs</title>
     <style>
-        :root { --azul: #003b8e; --rojo: #e74c3c; --dorado: #ffd400; --fondo: #f4f7f6; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--fondo); margin: 0; padding: 0; }
+        :root { --azul: #003b8e; --rojo: #e20613; --dorado: #ffd400; --fondo: #f4f7f6; --verde: #28a745; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--fondo); margin: 0; padding: 0; color: #333; }
         
-        .header-banner { background: linear-gradient(135deg, var(--azul) 0%, #0056b3 100%); color: white; text-align: center; padding: 30px 15px; border-bottom: 5px solid #00265d; }
-        .badge { background: var(--dorado); color: var(--azul); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: inline-block; }
+        .header-banner { background: linear-gradient(135deg, var(--azul) 0%, #0056b3 100%); color: white; text-align: center; padding: 25px 15px; border-bottom: 5px solid #00265d; }
+        .container { max-width: 800px; margin: -30px auto 40px; padding: 0 15px; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; position: relative; overflow: hidden; }
+
+        .seccion-titulo { background: var(--rojo); color: white; padding: 10px; font-weight: bold; text-transform: uppercase; font-size: 14px; margin: -20px -20px 15px -20px; text-align: center; }
         
-        .container { max-width: 700px; margin: -30px auto 40px; padding: 0 15px; }
-        .card { background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; margin-bottom: 20px; }
+        .controles { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; }
+        select { padding: 8px; border-radius: 6px; border: 1px solid #ddd; font-weight: bold; color: var(--azul); }
 
-        .controles { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
-        select { padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; color: var(--azul); cursor: pointer; }
-        .btn-embed { background: var(--azul); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        /* Ganador Principal */
+        .ganador-box { text-align: center; padding: 20px; border: 2px solid var(--dorado); border-radius: 10px; background: #fffdf2; }
+        .monto-principal { font-size: 2.5rem; font-weight: 900; color: var(--rojo); margin: 5px 0; }
+        .num-principal { font-size: 2rem; color: var(--rojo); border: 2px solid var(--dorado); padding: 5px 30px; display: inline-block; border-radius: 5px; background: white; font-weight: bold; }
 
-        .search-box { background: #f8f9fa; border: 2px solid var(--azul); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        /* Chips para aproximaciones */
+        .numero-chip { background: white; color: var(--azul); padding: 8px 18px; border-radius: 6px; font-weight: 800; border: 2px solid var(--azul); display: inline-block; margin: 5px; font-size: 1.1rem; box-shadow: 2px 2px 0px rgba(0,59,142,0.1); }
+
+        /* Publicidad */
+        .banner-promo { text-align: center; margin: 10px 0 25px 0; }
+        .banner-promo img { width: 100%; max-width: 600px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: transform 0.3s; }
+        .banner-promo img:hover { transform: scale(1.02); }
+
+        /* Tablas */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; }
+        th { background: #f8f9fa; padding: 10px; border-bottom: 2px solid var(--rojo); text-transform: uppercase; color: #555; }
+        td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+        
+        /* Buscador y Celebración */
+        .search-area { background: #f0f4f8; border: 2px solid var(--azul); border-radius: 10px; padding: 15px; margin-bottom: 20px; }
         .search-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
-        input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; text-align: center; font-size: 16px; }
-        .btn-check { background: var(--azul); color: white; border: none; border-radius: 6px; padding: 0 15px; cursor: pointer; font-weight: bold; }
+        #resBusqueda { display: none; margin-top: 10px; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         
-        #resBusqueda { display: none; margin-top: 15px; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 15px; animation: fadeIn 0.3s; }
+        .celebracion { background: #fff3cd; color: #856404; border: 3px solid var(--dorado); box-shadow: 0 0 20px rgba(255, 212, 0, 0.4); }
+        .ganador-simple { background: #d4edda; color: #155724; border: 1px solid var(--verde); }
 
-        .ganador-destacado { text-align: center; margin-bottom: 25px; }
-        .monto-xxl { font-size: 2.4rem; font-weight: 900; color: var(--rojo); margin: 5px 0; }
-        .num-xxl { background: var(--azul); color: white; padding: 6px 25px; border-radius: 50px; font-size: 1.8rem; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-
-        table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
-        th { background: #f0f0f0; padding: 12px 10px; text-align: left; color: #555; border-bottom: 2px solid #ddd; }
-        td { padding: 12px 10px; border-bottom: 1px solid #eee; }
-        .txt-premio { font-weight: bold; color: var(--azul); text-align: right; }
-
-        body.is-embed .header-banner, body.is-embed .controles { display: none; }
-        body.is-embed .container { margin-top: 20px; }
-        body.is-embed .card { box-shadow: none; border: 1px solid #eee; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 500px) { .search-grid { grid-template-columns: 1fr; } .monto-xxl { font-size: 1.8rem; } }
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @media (max-width: 500px) { .search-grid { grid-template-columns: 1fr; } .monto-principal { font-size: 1.8rem; } }
     </style>
 </head>
 <body>
 
 <section class="header-banner">
-    <span class="badge">Lotería de Concepción</span>
-    <h1 style="margin:0; font-size: 1.8rem;">Resultados Oficiales</h1>
-    <p id="subtitulo">Conectando con base de datos...</p>
+    <h1 style="margin:0;">BOLETO Lotería</h1>
+    <p id="subtitulo">Cargando sorteos...</p>
 </section>
 
 <div class="container">
     <div class="controles">
-        <select id="selectSorteo"><option>Cargando fechas...</option></select>
-        <button class="btn-embed" onclick="copiarEmbed()">Copiar Embed</button>
+        <select id="selectSorteo"></select>
+        <button onclick="copiarEmbed()" style="padding:8px; border-radius:6px; cursor:pointer; background:white; border:1px solid #ddd; font-weight:bold;">Embed</button>
     </div>
 
-    <div class="card search-box">
-        <div style="text-align: center; font-size: 13px; font-weight: bold; color: var(--azul); margin-bottom: 10px;">VERIFICAR MI BOLETO</div>
+    <div class="card search-area">
+        <div style="text-align:center; font-weight:bold; margin-bottom:10px; color:var(--azul);">VERIFICAR MI BOLETO</div>
         <div class="search-grid">
             <input type="number" id="inNum" placeholder="Número">
             <input type="number" id="inVig" placeholder="Vigésimo">
-            <button class="btn-check" onclick="verificar()">BUSCAR</button>
+            <button onclick="verificar()" style="background:var(--azul); color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:bold;">VERIFICAR</button>
         </div>
         <div id="resBusqueda"></div>
     </div>
 
-    <div class="card">
-        <div class="ganador-destacado">
-            <span style="font-size: 12px; font-weight: bold; color: #888;">PREMIO MAYOR AL ENTERO</span>
-            <div class="monto-xxl" id="montoM">$0</div>
-            <div class="num-xxl" id="numM">00000</div>
-        </div>
-
-        <h3 style="color: var(--azul); border-left: 4px solid var(--dorado); padding-left: 10px; font-size: 16px; margin-bottom: 15px;">Lista Oficial de Premios</h3>
-        <table>
-            <thead><tr><th>Número</th><th>Vig.</th><th style="text-align:right;">Premio Líquido</th></tr></thead>
-            <tbody id="tablaBody"></tbody>
-        </table>
-    </div>
+    <div id="contenidoResultados"></div>
 </div>
 
 <script>
     const SHEET_ID = "1jmqgDAU1HcTyT8zGqHacljhfn_WlN_pVjgyyonPEsXk";
     const URL_JSON = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
     
-    let ALL_SORTEOS = [];
-    let SORTEO_ACTIVO = null;
+    let ALL_DATA = [];
+    let ACTUAL = null;
 
-    const params = new URLSearchParams(window.location.search);
-    if(params.get('embed') === '1') document.body.classList.add('is-embed');
-    const fechaUrl = params.get('fecha');
+    function formatMonto(val) {
+        if (!val) return "$0";
+        let n = val.toString().replace(/[$.]/g, "");
+        return "$" + Number(n).toLocaleString('es-CL');
+    }
+
+    function limpiarListaNumeros(str) {
+        if (!str) return [];
+        return str.toString().replace(/[.,]/g, " ").split(/\s+/).filter(n => n.length > 0);
+    }
 
     fetch(URL_JSON).then(r => r.text()).then(text => {
         const json = JSON.parse(text.match(/setResponse\(([\s\S]*?)\);?\s*$/)[1]);
-        const rows = json.table.rows;
-
-        ALL_SORTEOS = rows.map(r => {
+        ALL_DATA = json.table.rows.map(r => {
             const c = r.c;
             return {
-                fecha: c[0] ? (c[0].f || c[0].v) : "",
-                n_sorteo: c[1] ? c[1].v.toString() : "",
-                numMayor: c[2] ? c[2].v.toString() : "",
-                montoMayor: c[3] ? c[3].v.toString() : "",
-                aprox1: c[4] ? c[4].v.toString().split(',').map(s => s.trim()) : [],
-                aprox2: c[5] ? c[5].v.toString().split(',').map(s => s.trim()) : [],
-                terminaciones: c[6] ? c[6].v.toString().split(',').map(s => s.trim()) : [],
-                vigesimos: c[7] ? c[7].v.toString() : ""
+                fecha: c[0]?.f || c[0]?.v,
+                n_sorteo: c[1]?.v.toString(),
+                numM: c[2]?.v.toString(),
+                montoM: c[3]?.v.toString(),
+                aprox1: limpiarListaNumeros(c[4]?.v),
+                aprox2: limpiarListaNumeros(c[5]?.v),
+                termina: c[6]?.v ? c[6].v.toString().split(',').map(s=>s.trim()) : [],
+                vigesimos: c[7]?.v ? c[7].v.toString() : ""
             };
         }).reverse();
 
-        const select = document.getElementById('selectSorteo');
-        select.innerHTML = ALL_SORTEOS.map(s => `<option value="${s.fecha}">${s.fecha} (Sorteo ${s.n_sorteo})</option>`).join('');
-
-        if(fechaUrl) {
-            SORTEO_ACTIVO = ALL_SORTEOS.find(s => s.fecha === fechaUrl) || ALL_SORTEOS[0];
-            select.value = SORTEO_ACTIVO.fecha;
-        } else {
-            SORTEO_ACTIVO = ALL_SORTEOS[0];
-        }
-
+        const sel = document.getElementById('selectSorteo');
+        sel.innerHTML = ALL_DATA.map(s => `<option value="${s.fecha}">${s.fecha} (Sorteo ${s.n_sorteo})</option>`).join('');
+        ACTUAL = ALL_DATA[0];
         render();
     });
 
     function render() {
-        if(!SORTEO_ACTIVO) return;
-        document.getElementById('subtitulo').innerText = `Sorteo N° ${SORTEO_ACTIVO.n_sorteo} - ${SORTEO_ACTIVO.fecha}`;
-        
-        // Corrección de doble signo $
-        const montoLimpio = SORTEO_ACTIVO.montoMayor.replace('$', '').trim();
-        document.getElementById('montoM').innerText = `$${montoLimpio}`;
-        document.getElementById('numM').innerText = SORTEO_ACTIVO.numMayor;
+        document.getElementById('subtitulo').innerText = `Sorteo N° ${ACTUAL.n_sorteo} - ${ACTUAL.fecha}`;
+        const cont = document.getElementById('contenidoResultados');
 
-        const tbody = document.getElementById('tablaBody');
-        const filas = SORTEO_ACTIVO.vigesimos.split(';');
-        let html = "";
-        filas.forEach(f => {
-            if(f.includes(':')) {
-                const [comb, monto] = f.split(':');
-                const [n, v] = comb.split('-');
-                const montoTabla = monto.toString().replace('$', '').trim();
-                html += `<tr><td><strong>${n}</strong></td><td>${v}</td><td class="txt-premio">$${montoTabla}</td></tr>`;
-            }
-        });
-        tbody.innerHTML = html;
-        document.getElementById('resBusqueda').style.display = "none";
+        if (!ACTUAL.vigesimos || ACTUAL.vigesimos.trim() === "") {
+            cont.innerHTML = `<div class="card" style="text-align:center; color:#999; padding:40px;"><h3>Resultados no disponibles aún</h3><p>Consulte más tarde.</p></div>`;
+            return;
+        }
+
+        let html = `
+            <div class="card">
+                <div class="ganador-box">
+                    <div style="font-weight:bold; color:#555;">Número Premiado</div>
+                    <div class="num-principal">${ACTUAL.numM}</div>
+                    <div style="font-weight:bold; color:#555; margin-top:10px;">Premio al Entero</div>
+                    <div class="monto-principal">${formatMonto(ACTUAL.montoM)}</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="seccion-titulo">Terminaciones Premiadas</div>
+                <table>
+                    <thead><tr><th>Terminación</th><th>Premio</th></tr></thead>
+                    <tbody>${ACTUAL.termina.map(t => `<tr><td style="font-weight:bold; color:var(--azul);">${t}</td><td>$2.500 al vigésimo</td></tr>`).join('')}</tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="seccion-titulo">Aproximaciones</div>
+                <div style="text-align:center; margin-bottom:15px;">
+                    <div style="font-weight:bold; font-size:12px; margin-bottom:8px;">1ª APROXIMACIÓN ($5.000.000)</div>
+                    ${ACTUAL.aprox1.map(n => `<span class="numero-chip">${n}</span>`).join('')}
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-weight:bold; font-size:12px; margin-bottom:8px;">2ª APROXIMACIÓN ($500.000)</div>
+                    ${ACTUAL.aprox2.map(n => `<span class="numero-chip">${n}</span>`).join('')}
+                </div>
+            </div>
+
+            <div class="banner-promo">
+                <a href="https://www.epicentroradio.com/?utm_source=epicentrochile&utm_medium=banner_robapaginas&utm_campaign=cobertura_nacional" target="_blank">
+                    <img src="https://primerosenlaquinta.cl/wp-content/uploads/2026/03/ChileybotanasconamarilloenfondorojoparaNegociodeSnacksLogo-ezgif.com-optimize.gif" alt="Publicidad Epicentro Radio">
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="seccion-titulo">Premios al Vigésimo</div>
+                <table>
+                    <thead><tr><th>Número</th><th>Vig.</th><th>Premio Líquido</th></tr></thead>
+                    <tbody>
+                        ${ACTUAL.vigesimos.split(';').map(item => {
+                            if(!item.includes(':')) return '';
+                            const [c, m] = item.split(':');
+                            const [n, v] = c.split('-');
+                            return `<tr><td style="font-weight:bold; color:var(--azul);">${n}</td><td>${v}</td><td style="font-weight:bold; color:var(--rojo);">${formatMonto(m)}</td></tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        cont.innerHTML = html;
     }
 
-    document.getElementById('selectSorteo').addEventListener('change', (e) => {
-        SORTEO_ACTIVO = ALL_SORTEOS.find(s => s.fecha === e.target.value);
+    document.getElementById('selectSorteo').onchange = (e) => {
+        ACTUAL = ALL_DATA.find(s => s.fecha === e.target.value);
         render();
-    });
+    };
 
     function verificar() {
         const n = document.getElementById('inNum').value.trim();
@@ -159,42 +188,34 @@
         if(!n || !v) return;
 
         res.style.display = "block";
-        const llave = `${n}-${v}`;
-        const lista = SORTEO_ACTIVO.vigesimos.split(';');
-        let premio = null;
+        const comb = `${n}-${v}`;
+        const lista = ACTUAL.vigesimos.split(';');
+        let p = null;
+        for(let x of lista) { const [c, m] = x.split(':'); if(c.trim() === comb) { p = m; break; } }
 
-        for(let f of lista) {
-            const [c, m] = f.split(':');
-            if(c.trim() === llave) { premio = m; break; }
-        }
-
-        if(premio) {
-            const pLimpio = premio.toString().replace('$', '').trim();
-            res.style.background = "#d4edda"; res.style.color = "#155724";
-            res.innerHTML = `¡GANASTE! Vigésimo ${v} del ${n}: $${pLimpio}`;
-        } else if(n === SORTEO_ACTIVO.numMayor) {
-            res.style.background = "#fff3cd"; res.style.color = "#856404";
-            res.innerHTML = "¡NUMERO GANADOR DEL PREMIO MAYOR!";
-        } else if (SORTEO_ACTIVO.aprox1.includes(n)) {
-            res.style.background = "#d1ecf1"; res.style.color = "#0c5460";
-            res.innerHTML = "¡GANASTE 1ª APROXIMACIÓN! ($5.000.000)";
-        } else if (SORTEO_ACTIVO.aprox2.includes(n)) {
-            res.style.background = "#d1ecf1"; res.style.color = "#0c5460";
-            res.innerHTML = "¡GANASTE 2ª APROXIMACIÓN! ($500.000)";
-        } else if (SORTEO_ACTIVO.terminaciones.includes(n.slice(-1))) {
-            res.style.background = "#e2e3e5"; res.style.color = "#383d41";
-            res.innerHTML = `PREMIO POR TERMINACIÓN "${n.slice(-1)}"`;
+        if (n === ACTUAL.numM) {
+            res.className = "celebracion";
+            res.innerHTML = `⭐ ¡ES EL PREMIO MAYOR! ⭐<br>Vigésimo ${v} premiado con parte de los ${formatMonto(ACTUAL.montoM)}`;
+        } else if(p) {
+            res.className = "ganador-simple";
+            res.innerHTML = `¡GANASTE! 🎉<br>Vigésimo ${v} del ${n} premiado con ${formatMonto(p)}`;
+        } else if (ACTUAL.aprox1.includes(n)) {
+            res.className = "celebracion";
+            res.innerHTML = "¡1ª APROXIMACIÓN GANADA! 💰<br>Premio de $5.000.000 al entero.";
+        } else if (ACTUAL.termina.includes(n.slice(-1))) {
+            res.className = "ganador-simple";
+            res.innerHTML = `PREMIO POR TERMINACIÓN "${n.slice(-1)}" ✅<br>$2.500 al vigésimo.`;
         } else {
-            res.style.background = "#f8d7da"; res.style.color = "#721c24";
-            res.innerHTML = "Sin premios registrados para este sorteo.";
+            res.className = ""; res.style.background = "#f8d7da"; res.style.color="#721c24"; res.style.border="none";
+            res.innerHTML = "Sin premios para esta combinación.";
         }
     }
 
     function copiarEmbed() {
         const base = window.location.href.split('?')[0];
-        const fecha = document.getElementById('selectSorteo').value;
-        const code = `<iframe src="${base}?fecha=${fecha}&embed=1" width="100%" height="900" style="border:0; border-radius:12px; overflow:hidden;" loading="lazy"></iframe>`;
-        navigator.clipboard.writeText(code).then(() => alert("Código Embed copiado para el sorteo del " + fecha));
+        const f = document.getElementById('selectSorteo').value;
+        const code = `<iframe src="${base}?fecha=${f}&embed=1" width="100%" height="950" style="border:0; border-radius:12px; overflow:hidden;" loading="lazy"></iframe>`;
+        navigator.clipboard.writeText(code).then(() => alert("Embed copiado para el " + f));
     }
 </script>
 </body>
