@@ -14,36 +14,38 @@
 
         .seccion-titulo { background: var(--rojo); color: white; padding: 10px; font-weight: bold; text-transform: uppercase; font-size: 14px; margin: -20px -20px 15px -20px; text-align: center; }
         
-        .controles { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; }
-        select { padding: 8px; border-radius: 6px; border: 1px solid #ddd; font-weight: bold; color: var(--azul); }
+        /* Controles de Administración */
+        .admin-controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; }
+        select { padding: 8px; border-radius: 6px; border: 1px solid #ddd; font-weight: bold; color: var(--azul); cursor: pointer; }
+        .btn-copy { padding: 8px 15px; border-radius: 6px; cursor: pointer; background: white; border: 1px solid var(--azul); color: var(--azul); font-weight: bold; transition: 0.3s; }
+        .btn-copy:hover { background: var(--azul); color: white; }
 
         /* Ganador Principal */
         .ganador-box { text-align: center; padding: 20px; border: 2px solid var(--dorado); border-radius: 10px; background: #fffdf2; }
         .monto-principal { font-size: 2.5rem; font-weight: 900; color: var(--rojo); margin: 5px 0; }
         .num-principal { font-size: 2rem; color: var(--rojo); border: 2px solid var(--dorado); padding: 5px 30px; display: inline-block; border-radius: 5px; background: white; font-weight: bold; }
 
-        /* Chips para aproximaciones */
         .numero-chip { background: white; color: var(--azul); padding: 8px 18px; border-radius: 6px; font-weight: 800; border: 2px solid var(--azul); display: inline-block; margin: 5px; font-size: 1.1rem; box-shadow: 2px 2px 0px rgba(0,59,142,0.1); }
 
-        /* Publicidad */
         .banner-promo { text-align: center; margin: 10px 0 25px 0; }
-        .banner-promo img { width: 100%; max-width: 600px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: transform 0.3s; }
-        .banner-promo img:hover { transform: scale(1.02); }
+        .banner-promo img { width: 100%; max-width: 600px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 
-        /* Tablas */
         table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; }
         th { background: #f8f9fa; padding: 10px; border-bottom: 2px solid var(--rojo); text-transform: uppercase; color: #555; }
         td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
         
-        /* Buscador y Celebración */
         .search-area { background: #f0f4f8; border: 2px solid var(--azul); border-radius: 10px; padding: 15px; margin-bottom: 20px; }
         .search-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
-        #resBusqueda { display: none; margin-top: 10px; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #resBusqueda { display: none; margin-top: 10px; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; }
         
-        .celebracion { background: #fff3cd; color: #856404; border: 3px solid var(--dorado); box-shadow: 0 0 20px rgba(255, 212, 0, 0.4); }
+        .celebracion { background: #fff3cd; color: #856404; border: 3px solid var(--dorado); }
         .ganador-simple { background: #d4edda; color: #155724; border: 1px solid var(--verde); }
 
-        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        /* MODO EMBED: Oculta cabecera y herramientas de administrador */
+        body.is-embed .header-banner, 
+        body.is-embed .admin-controls { display: none !important; }
+        body.is-embed .container { margin-top: 20px; }
+
         @media (max-width: 500px) { .search-grid { grid-template-columns: 1fr; } .monto-principal { font-size: 1.8rem; } }
     </style>
 </head>
@@ -55,9 +57,9 @@
 </section>
 
 <div class="container">
-    <div class="controles">
+    <div class="admin-controls">
         <select id="selectSorteo"></select>
-        <button onclick="copiarEmbed()" style="padding:8px; border-radius:6px; cursor:pointer; background:white; border:1px solid #ddd; font-weight:bold;">Embed</button>
+        <button class="btn-copy" onclick="copiarEmbed()">Copiar Embed</button>
     </div>
 
     <div class="card search-area">
@@ -80,6 +82,14 @@
     let ALL_DATA = [];
     let ACTUAL = null;
 
+    // Obtener parámetros de la URL
+    const params = new URLSearchParams(window.location.search);
+    const fechaUrl = params.get('fecha');
+    const esEmbed = params.get('embed') === '1';
+
+    // Aplicar clase embed si corresponde
+    if(esEmbed) document.body.classList.add('is-embed');
+
     function formatMonto(val) {
         if (!val) return "$0";
         let n = val.toString().replace(/[$.]/g, "");
@@ -96,7 +106,7 @@
         ALL_DATA = json.table.rows.map(r => {
             const c = r.c;
             return {
-                fecha: c[0]?.f || c[0]?.v,
+                fecha: c[0] ? (c[0].f || c[0].v).trim() : "",
                 n_sorteo: c[1]?.v.toString(),
                 numM: c[2]?.v.toString(),
                 montoM: c[3]?.v.toString(),
@@ -109,7 +119,15 @@
 
         const sel = document.getElementById('selectSorteo');
         sel.innerHTML = ALL_DATA.map(s => `<option value="${s.fecha}">${s.fecha} (Sorteo ${s.n_sorteo})</option>`).join('');
-        ACTUAL = ALL_DATA[0];
+
+        // Lógica de selección de fecha
+        if (fechaUrl) {
+            ACTUAL = ALL_DATA.find(s => s.fecha === fechaUrl) || ALL_DATA[0];
+            sel.value = ACTUAL.fecha;
+        } else {
+            ACTUAL = ALL_DATA[0];
+        }
+
         render();
     });
 
@@ -202,11 +220,8 @@
         } else if (ACTUAL.aprox1.includes(n)) {
             res.className = "celebracion";
             res.innerHTML = "¡1ª APROXIMACIÓN GANADA! 💰<br>Premio de $5.000.000 al entero.";
-        } else if (ACTUAL.termina.includes(n.slice(-1))) {
-            res.className = "ganador-simple";
-            res.innerHTML = `PREMIO POR TERMINACIÓN "${n.slice(-1)}" ✅<br>$2.500 al vigésimo.`;
         } else {
-            res.className = ""; res.style.background = "#f8d7da"; res.style.color="#721c24"; res.style.border="none";
+            res.className = ""; res.style.background = "#f8d7da"; res.style.color="#721c24";
             res.innerHTML = "Sin premios para esta combinación.";
         }
     }
@@ -214,8 +229,8 @@
     function copiarEmbed() {
         const base = window.location.href.split('?')[0];
         const f = document.getElementById('selectSorteo').value;
-        const code = `<iframe src="${base}?fecha=${f}&embed=1" width="100%" height="950" style="border:0; border-radius:12px; overflow:hidden;" loading="lazy"></iframe>`;
-        navigator.clipboard.writeText(code).then(() => alert("Embed copiado para el " + f));
+        const code = `<iframe src="${base}?fecha=${f}&embed=1" width="100%" height="1050" style="border:0; border-radius:12px; overflow:hidden;" loading="lazy"></iframe>`;
+        navigator.clipboard.writeText(code).then(() => alert("Embed copiado para el sorteo: " + f));
     }
 </script>
 </body>
